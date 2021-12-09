@@ -2,12 +2,18 @@ package entities
 
 import "errors"
 
+const (
+	REJECTED = "rejected"
+	APPROVED = "approved"
+)
+
 type Transaction struct {
 	Id           string
 	AccountId    string
 	Amount       float64
 	Status       string
 	ErrorMessage string
+	CreditCard   CreditCard
 }
 
 func NewTransaction(id string, accountId string, amount float64) *Transaction {
@@ -17,6 +23,7 @@ func NewTransaction(id string, accountId string, amount float64) *Transaction {
 		amount,
 		"",
 		"",
+		CreditCard{},
 	}
 }
 
@@ -29,4 +36,8 @@ func (t *Transaction) IsValid() error {
 	}
 
 	return nil
+}
+
+func (t *Transaction) SetCreditCard(card CreditCard) {
+	t.CreditCard = card
 }
