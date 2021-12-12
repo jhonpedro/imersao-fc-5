@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  api:
+    build: .
+    entrypoint: wait-for db:3306 -t 40 -- ./.docker/entrypoint.sh
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/home/node/api
+    depends_on:
+      - db
+
+  db:
+    build: ./.docker/mysql
+    restart: always
+    tty: true
+    volumes:
+      - ./.docker/dbdata:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=fin
+      - MYSQL_ROOT_PASSWORD=12345

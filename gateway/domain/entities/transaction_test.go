@@ -7,7 +7,7 @@ import (
 )
 
 func TestTransactionWithAmountGreaterThan1000(t *testing.T) {
-	transaction := NewTransaction("1", "1", 2000)
+	transaction := NewTransaction("uuid", "1", "1", 2000)
 
 	isTransactionValid := transaction.IsValid()
 
@@ -16,7 +16,7 @@ func TestTransactionWithAmountGreaterThan1000(t *testing.T) {
 }
 
 func TestTransactionWithAmoutLessThan1(t *testing.T) {
-	transaction := NewTransaction("1", "1", 0)
+	transaction := NewTransaction("uuid", "1", "1", 0)
 
 	isTransactionValid := transaction.IsValid()
 

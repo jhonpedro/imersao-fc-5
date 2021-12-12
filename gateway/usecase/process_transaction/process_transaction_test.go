@@ -1,6 +1,7 @@
 package process_transaction
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 func TestProcessTransaction_ExecuteInvalidCreditCard(t *testing.T) {
 	input := TransactionInputDto{
+
 		Id:                        "uuid",
 		AccountId:                 "1",
 		CreditCardNumber:          "34111111111111",
@@ -25,6 +27,7 @@ func TestProcessTransaction_ExecuteInvalidCreditCard(t *testing.T) {
 	}
 
 	expectedOutput := TransactionOutputDto{
+		EvaluationId: "uuid",
 		Id:           "uuid",
 		Status:       entities.REJECTED,
 		ErrorMessage: "invalid credit card number",
@@ -33,7 +36,7 @@ func TestProcessTransaction_ExecuteInvalidCreditCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	repositoryMock := mock_repository.NewMockTransactionRepository(ctrl)
-	repositoryMock.EXPECT().Insert(input.Id, input.AccountId, input.Amount, expectedOutput.Status, expectedOutput.ErrorMessage).Return(nil)
+	repositoryMock.EXPECT().Insert("uuid", input.Id, input.AccountId, input.Amount, expectedOutput.Status, expectedOutput.ErrorMessage).Return(nil)
 
 	uniqueIdentifierMock := mock_services.NewMockUniqueIdentifierService(ctrl)
 	uniqueIdentifierMock.EXPECT().Generate().Return("uuid")
@@ -62,6 +65,7 @@ func TestProcessTransaction_ExecuteRejectTransaction(t *testing.T) {
 	}
 
 	expectedOutput := TransactionOutputDto{
+		EvaluationId: "uuid",
 		Id:           "uuid",
 		Status:       entities.REJECTED,
 		ErrorMessage: "you do not have limit for this transaction",
@@ -70,7 +74,7 @@ func TestProcessTransaction_ExecuteRejectTransaction(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	repositoryMock := mock_repository.NewMockTransactionRepository(ctrl)
-	repositoryMock.EXPECT().Insert(input.Id, input.AccountId, input.Amount, expectedOutput.Status, expectedOutput.ErrorMessage).Return(nil)
+	repositoryMock.EXPECT().Insert("uuid", input.Id, input.AccountId, input.Amount, expectedOutput.Status, expectedOutput.ErrorMessage).Return(nil)
 
 	uniqueIdentifierMock := mock_services.NewMockUniqueIdentifierService(ctrl)
 	uniqueIdentifierMock.EXPECT().Generate().Return("uuid")
@@ -99,6 +103,7 @@ func TestProcessTransaction_ExecuteApprovedTransaction(t *testing.T) {
 	}
 
 	expectedOutput := TransactionOutputDto{
+		EvaluationId: "uuid",
 		Id:           "uuid",
 		Status:       entities.APPROVED,
 		ErrorMessage: "",
@@ -107,17 +112,19 @@ func TestProcessTransaction_ExecuteApprovedTransaction(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	repositoryMock := mock_repository.NewMockTransactionRepository(ctrl)
-	repositoryMock.EXPECT().Insert(input.Id, input.AccountId, input.Amount, expectedOutput.Status, expectedOutput.ErrorMessage).Return(nil)
+	repositoryMock.EXPECT().Insert("uuid", input.Id, input.AccountId, input.Amount, expectedOutput.Status, expectedOutput.ErrorMessage).Return(nil)
 
 	uniqueIdentifierMock := mock_services.NewMockUniqueIdentifierService(ctrl)
 	uniqueIdentifierMock.EXPECT().Generate().Return("uuid")
 
 	producerMock := mock_broker.NewMockProducerInterface(ctrl)
-	producerMock.EXPECT().Publish(expectedOutput, []byte(input.Id), "transaction_result")
+	producerMock.EXPECT().Publish(expectedOutput, []byte(input.Id), "transaction_result").Return(nil)
 
 	usecase := NewProcessTransaction(repositoryMock, uniqueIdentifierMock, producerMock, "transaction_result")
 
 	output, err := usecase.Execute(input)
+
+	fmt.Println(err)
 
 	assert.Nil(t, err)
 	assert.Equal(t, expectedOutput, output)

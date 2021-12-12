@@ -16,7 +16,7 @@ func TestTransactionRepositoryDb_Insert(t *testing.T) {
 
 	repository := NewTransactionRepositoryDb(db)
 
-	err := repository.Insert("1", "1", 2, entities.APPROVED, "")
+	err := repository.Insert("1", "1", "1", 2, entities.APPROVED, "")
 
 	assert.Nil(t, err)
 

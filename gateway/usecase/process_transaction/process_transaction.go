@@ -20,39 +20,40 @@ func NewProcessTransaction(repository repository.TransactionRepository, uniqueId
 
 func (p *ProcessTransaction) Execute(input TransactionInputDto) (TransactionOutputDto, error) {
 
-	id := p.uniqueIdentifier.Generate()
+	evaluation_id := p.uniqueIdentifier.Generate()
 
-	transaction := entities.NewTransaction(id, input.AccountId, input.Amount)
+	transaction := entities.NewTransaction(evaluation_id, input.Id, input.AccountId, input.Amount)
 	cc, invalidCcError := entities.NewCreditCard(input.CreditCardNumber, input.CreditCardName, input.CreditCardExpirationMonth, input.CreditCardExpirationYear, input.CreditCardCVV)
 
 	if invalidCcError != nil {
-		return p.rejectTransaction(input, id, invalidCcError)
+		return p.rejectTransaction(transaction, invalidCcError)
 	}
 
 	transaction.SetCreditCard(*cc)
 	isTransactionValid := transaction.IsValid()
 
 	if isTransactionValid != nil {
-		return p.rejectTransaction(input, id, isTransactionValid)
+		return p.rejectTransaction(transaction, isTransactionValid)
 	}
 
-	return p.aproveTransaction(input, id)
+	return p.aproveTransaction(transaction)
 }
 
-func (p *ProcessTransaction) rejectTransaction(input TransactionInputDto, id string, err error) (TransactionOutputDto, error) {
-	repositoryInsertError := p.repository.Insert(id, input.AccountId, input.Amount, entities.REJECTED, err.Error())
+func (p *ProcessTransaction) rejectTransaction(transaction *entities.Transaction, err error) (TransactionOutputDto, error) {
+	repositoryInsertError := p.repository.Insert(transaction.EvaluationId, transaction.Id, transaction.AccountId, transaction.Amount, entities.REJECTED, err.Error())
 
 	if repositoryInsertError != nil {
 		return TransactionOutputDto{}, repositoryInsertError
 	}
 
 	output := TransactionOutputDto{
-		Id:           id,
+		EvaluationId: transaction.EvaluationId,
+		Id:           transaction.Id,
 		Status:       entities.REJECTED,
 		ErrorMessage: err.Error(),
 	}
 
-	errPub := p.publish(output, []byte(input.Id))
+	errPub := p.publish(output, []byte(transaction.Id))
 
 	if errPub != nil {
 		return TransactionOutputDto{}, errPub
@@ -61,26 +62,28 @@ func (p *ProcessTransaction) rejectTransaction(input TransactionInputDto, id str
 	return output, nil
 }
 
-func (p *ProcessTransaction) aproveTransaction(input TransactionInputDto, id string) (TransactionOutputDto, error) {
-	repositoryInsertError := p.repository.Insert(id, input.AccountId, input.Amount, entities.APPROVED, "")
+func (p *ProcessTransaction) aproveTransaction(transaction *entities.Transaction) (TransactionOutputDto, error) {
+	repositoryInsertError := p.repository.Insert(transaction.EvaluationId, transaction.Id, transaction.AccountId, transaction.Amount, entities.APPROVED, "")
 
 	if repositoryInsertError != nil {
 		return TransactionOutputDto{}, repositoryInsertError
 	}
 
 	output := TransactionOutputDto{
-		Id:           id,
+		EvaluationId: transaction.EvaluationId,
+		Id:           transaction.Id,
 		Status:       entities.APPROVED,
 		ErrorMessage: "",
 	}
 
-	errPub := p.publish(output, []byte(input.Id))
+	errPub := p.publish(output, []byte(transaction.Id))
 
 	if errPub != nil {
 		return TransactionOutputDto{}, errPub
 	}
 
 	return output, nil
+
 }
 
 func (p *ProcessTransaction) publish(output TransactionOutputDto, key []byte) error {

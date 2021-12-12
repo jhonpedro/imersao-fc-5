@@ -8,6 +8,7 @@ const (
 )
 
 type Transaction struct {
+	EvaluationId string
 	Id           string
 	AccountId    string
 	Amount       float64
@@ -16,8 +17,9 @@ type Transaction struct {
 	CreditCard   CreditCard
 }
 
-func NewTransaction(id string, accountId string, amount float64) *Transaction {
+func NewTransaction(evaluation_id string, id string, accountId string, amount float64) *Transaction {
 	return &Transaction{
+		evaluation_id,
 		id,
 		accountId,
 		amount,

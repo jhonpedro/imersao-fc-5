@@ -1,4 +1,5 @@
 create table transactions (
+  evaluation_id text not null,
   id text not null,
   account_id text not null,
   amount real not null,

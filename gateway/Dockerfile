@@ -4,4 +4,6 @@ WORKDIR /go/src
 
 RUN apt-get update && apt-get install build-essential librdkafka-dev -y
 
-CMD ["tail", "-f", "/dev/null"]
+RUN go mod tidy
+
+CMD ["go", "run", "cmd/main.go"]

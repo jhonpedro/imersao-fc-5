@@ -12,6 +12,7 @@ type TransactionInputDto struct {
 }
 
 type TransactionOutputDto struct {
+	EvaluationId string `json:"evaluation_id"`
 	Id           string `json:"id"`
 	Status       string `json:"status"`
 	ErrorMessage string `json:"error_message"`
